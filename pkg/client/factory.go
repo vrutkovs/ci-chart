@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	defaultHTTPPort  = 3001
+	defaultHTTPPort  = 6001
 	defaultCacheSize = 100
 )
 
