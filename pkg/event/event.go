@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 )
 
@@ -95,4 +96,22 @@ func (s *store) JSONHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
+}
+
+func PodEventToInput(ev corev1.Event) Input {
+	return Input{
+		group:     ev.InvolvedObject.Namespace,
+		label:     ev.InvolvedObject.Name,
+		value:     ev.Reason,
+		timestamp: ev.LastTimestamp.Time,
+	}
+}
+
+func ClusterOperatorEventToInput(ev corev1.Event) Input {
+	return Input{
+		group:     ev.InvolvedObject.Namespace,
+		label:     ev.InvolvedObject.Name,
+		value:     ev.Reason,
+		timestamp: ev.LastTimestamp.Time,
+	}
 }

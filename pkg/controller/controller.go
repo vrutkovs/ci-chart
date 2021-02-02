@@ -28,7 +28,7 @@ func (c *Controller) ParseMustGather() error {
 // FindPodTransitions will parse must gather and fill in eventStore with pod state transitions
 func (c *Controller) FindPodTransitions() {
 	for _, ns := range c.mustgather.Namespaces() {
-		for _, i := range c.mustgather.PodEvents(ns) {
+		for _, i := range *c.mustgather.PodEvents(ns) {
 			c.eventStore.Add(i)
 		}
 	}
@@ -37,7 +37,7 @@ func (c *Controller) FindPodTransitions() {
 // FindOperatorTransitions will parse must gather and fill in eventStore with pod state transitions
 func (c *Controller) FindOperatorTransitions() {
 	for _, ns := range c.mustgather.Namespaces() {
-		for _, i := range c.mustgather.OperatorEvents(ns) {
+		for _, i := range *c.mustgather.OperatorEvents(ns) {
 			c.eventStore.Add(i)
 		}
 	}

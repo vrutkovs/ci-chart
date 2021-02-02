@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 
 	"github.com/vrutkovs/ci-chart/pkg/event"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
 type parser struct {
@@ -20,8 +22,8 @@ type parser struct {
 type Parser interface {
 	ParseMustGather() error
 	Namespaces() []string
-	PodEvents(ns string) []event.Input
-	OperatorEvents(ns string) []event.Input
+	PodEvents(ns string) *[]event.Input
+	OperatorEvents(ns string) *[]event.Input
 }
 
 func NewParser(path string) Parser {
@@ -102,10 +104,62 @@ func (s *parser) Namespaces() []string {
 	return namespaces
 }
 
-func (s *parser) PodEvents(ns string) []event.Input {
-	return []event.Input{}
+func parseEventsYaml(inputs []corev1.Event, evfile string) []corev1.Event {
+	bytes, err := ioutil.ReadFile(evfile)
+	if err != nil {
+		panic(err.Error())
+	}
+	// Open events file, deserialize it and return all inputs
+	decode := scheme.Codecs.UniversalDeserializer().Decode
+	obj, _, err := decode([]byte(bytes), nil, nil)
+	if err != nil {
+		fmt.Print(err)
+		return inputs
+	}
+
+	for _, ev := range obj.(*corev1.EventList).Items {
+		inputs = append(inputs, ev)
+	}
+	return inputs
 }
 
-func (s *parser) OperatorEvents(ns string) []event.Input {
-	return []event.Input{}
+func (s *parser) parseEventFiles(ns string) []corev1.Event {
+	inputs := []corev1.Event{}
+	eventfiles, err := filepath.Glob(fmt.Sprintf("%s/*/namespaces/*/core/events.yaml", s.tmplocation))
+	if err != nil {
+		return inputs
+	}
+	for _, evfile := range eventfiles {
+		inputs = parseEventsYaml(inputs, evfile)
+	}
+	return inputs
+
+}
+
+func (s *parser) PodEvents(ns string) *[]event.Input {
+	result := []event.Input{}
+
+	inputs := s.parseEventFiles(ns)
+	for _, ev := range inputs {
+		if ev.InvolvedObject.Kind != "Pod" || ev.InvolvedObject.FieldPath != "" {
+			continue
+		}
+		newInput := event.PodEventToInput(ev)
+		result = append(result, newInput)
+	}
+	return &result
+}
+
+func (s *parser) OperatorEvents(ns string) *[]event.Input {
+	result := []event.Input{}
+
+	inputs := s.parseEventFiles(ns)
+	for _, ev := range inputs {
+		if ev.Reason != "OperatorStatusChanged" {
+			continue
+		}
+		newInput := event.ClusterOperatorEventToInput(ev)
+		result = append(result, newInput)
+	}
+	return &result
 }
