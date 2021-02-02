@@ -145,7 +145,10 @@ func (s *parser) PodEvents(ns string) *[]event.Input {
 			continue
 		}
 		newInput := event.PodEventToInput(ev)
-		result = append(result, newInput)
+		if newInput == nil {
+			continue
+		}
+		result = append(result, *newInput)
 	}
 	return &result
 }
@@ -159,7 +162,10 @@ func (s *parser) OperatorEvents(ns string) *[]event.Input {
 			continue
 		}
 		newInput := event.ClusterOperatorEventToInput(ev)
-		result = append(result, newInput)
+		if newInput == nil {
+			continue
+		}
+		result = append(result, *newInput)
 	}
 	return &result
 }
