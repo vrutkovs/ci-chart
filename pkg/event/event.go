@@ -9,6 +9,14 @@ import (
 	"k8s.io/klog/v2"
 )
 
+type Input struct {
+	group       string
+	label       string
+	value       string
+	description string
+	timestamp   time.Time
+}
+
 type event struct {
 	value       string
 	description string
@@ -21,7 +29,7 @@ type store struct {
 }
 
 type Store interface {
-	Add(group, label, value, extended string)
+	Add(i Input)
 	JSONHandler(w http.ResponseWriter, r *http.Request)
 }
 
@@ -29,21 +37,21 @@ func NewStore() Store {
 	return &store{events: map[string]map[string][]event{}}
 }
 
-func (s *store) Add(group, label, value, description string) {
+func (s *store) Add(i Input) {
 	s.Lock()
 	defer s.Unlock()
-	groupevents, ok := s.events[group]
+	groupevents, ok := s.events[i.group]
 	if !ok {
-		s.events[group] = map[string][]event{}
-		groupevents, _ = s.events[group]
+		s.events[i.group] = map[string][]event{}
+		groupevents, _ = s.events[i.group]
 	}
-	labelevents, ok := groupevents[label]
-	if !ok || labelevents[len(labelevents)-1].value != value {
-		event := event{value: value, description: description, timestamp: time.Now()}
-		klog.Infof("adding event for %s/%s: %#v", group, label, event)
-		groupevents[label] = append(groupevents[label], event)
+	labelevents, ok := groupevents[i.label]
+	if !ok || labelevents[len(labelevents)-1].value != i.value {
+		event := event{value: i.value, description: i.description, timestamp: i.timestamp}
+		klog.Infof("adding event for %s/%s: %#v", i.group, i.label, event)
+		groupevents[i.label] = append(groupevents[i.label], event)
 	} else {
-		klog.Infof("duplicate event dropped for %s/%s", group, label)
+		klog.Infof("duplicate event dropped for %s/%s", i.group, i.label)
 	}
 }
 

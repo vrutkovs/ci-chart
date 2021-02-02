@@ -1,4 +1,4 @@
-package podchart
+package opchart
 
 import (
 	"flag"
@@ -33,8 +33,8 @@ func run(c *cobra.Command, f client.Factory) error {
 	eventStore := event.NewStore()
 	controller := controller.New(f.MustGather(), eventStore)
 
-	controller.FindPodTransitions()
-	ui.Run(eventStore, f.Port(), "podchart")
+	controller.FindOperatorTransitions()
+	ui.Run(eventStore, f.Port(), "opchart")
 
 	return nil
 }

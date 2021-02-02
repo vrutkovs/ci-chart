@@ -11,13 +11,13 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func Run(store event.Store, port uint16) {
+func Run(store event.Store, port uint16, subpath string) {
 	r := mux.NewRouter()
 	path, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		path = "."
 	}
-	r.Handle("/", http.FileServer(http.Dir(fmt.Sprintf("%s/static", path))))
+	r.Handle("/", http.FileServer(http.Dir(fmt.Sprintf("%s/%s/static", path, subpath))))
 	r.HandleFunc("/data.json", store.JSONHandler)
 	klog.Infof(fmt.Sprintf("Listening on :%d", port))
 	klog.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), r))
