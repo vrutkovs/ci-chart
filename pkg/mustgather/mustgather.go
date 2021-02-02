@@ -1,19 +1,37 @@
 package mustgather
 
-import "github.com/vrutkovs/ci-chart/pkg/event"
+import (
+	"github.com/vrutkovs/ci-chart/pkg/event"
+)
 
 type parser struct {
-	path string
+	path        string
+	tmplocation string
 }
 
 type Parser interface {
+	ParseMustGather() error
 	Namespaces() []string
 	PodEvents(ns string) []event.Input
 	OperatorEvents(ns string) []event.Input
 }
 
 func NewParser(path string) Parser {
-	return &parser{path: path}
+	// Unpack tar.gz to tmploc
+	parser := &parser{path: path}
+	return parser
+}
+
+func (s *parser) ParseMustGather() error {
+	err := s.unpackMustGather()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *parser) unpackMustGather() error {
+	return nil
 }
 
 func (s *parser) Namespaces() []string {

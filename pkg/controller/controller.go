@@ -20,6 +20,11 @@ func New(path string, eventStore event.Store) *Controller {
 	return controller
 }
 
+// ParseMustGather runs must gather parsing
+func (c *Controller) ParseMustGather() error {
+	return c.mustgather.ParseMustGather()
+}
+
 // FindPodTransitions will parse must gather and fill in eventStore with pod state transitions
 func (c *Controller) FindPodTransitions() {
 	for _, ns := range c.mustgather.Namespaces() {

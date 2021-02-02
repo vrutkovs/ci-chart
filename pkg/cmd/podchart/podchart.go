@@ -32,7 +32,9 @@ func NewCommand(name string) *cobra.Command {
 func run(c *cobra.Command, f client.Factory) error {
 	eventStore := event.NewStore()
 	controller := controller.New(f.MustGather(), eventStore)
-
+	if err := controller.ParseMustGather(); err != nil {
+		return err
+	}
 	controller.FindPodTransitions()
 	ui.Run(eventStore, f.Port(), "podchart")
 
