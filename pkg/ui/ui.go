@@ -17,7 +17,7 @@ func Run(store event.Store, port uint16, subpath string) {
 	if err != nil {
 		path = "."
 	}
-	r.Handle("/", http.FileServer(http.Dir(fmt.Sprintf("%s/%s/static", path, subpath))))
+	r.Handle("/", http.FileServer(http.Dir(fmt.Sprintf("%s/static/%s", path, subpath))))
 	r.HandleFunc("/data.json", store.JSONHandler)
 	klog.Infof(fmt.Sprintf("Listening on :%d", port))
 	klog.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), r))
