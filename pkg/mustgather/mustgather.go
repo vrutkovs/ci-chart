@@ -125,7 +125,7 @@ func parseEventsYaml(inputs []corev1.Event, evfile string) []corev1.Event {
 
 func (s *parser) parseEventFiles(ns string) []corev1.Event {
 	inputs := []corev1.Event{}
-	eventfiles, err := filepath.Glob(fmt.Sprintf("%s/*/namespaces/*/core/events.yaml", s.tmplocation))
+	eventfiles, err := filepath.Glob(fmt.Sprintf("%s/*/namespaces/%s/core/events.yaml", s.tmplocation, ns))
 	if err != nil {
 		return inputs
 	}
