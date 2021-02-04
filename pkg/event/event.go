@@ -98,26 +98,39 @@ func (s *store) JSONHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(js)
 }
 
+func eventTimeStamp(ev corev1.Event) *time.Time {
+	if !ev.EventTime.Time.IsZero() {
+		return &ev.EventTime.Time
+	}
+	if !ev.LastTimestamp.Time.IsZero() {
+		return &ev.LastTimestamp.Time
+	}
+	return nil
+}
+
 func PodEventToInput(ev corev1.Event) *Input {
-	if ev.EventTime.Time.IsZero() {
+	tmstmp := eventTimeStamp(ev)
+	if tmstmp == nil {
 		return nil
 	}
 	return &Input{
 		group:     ev.InvolvedObject.Namespace,
 		label:     ev.InvolvedObject.Name,
 		value:     ev.Reason,
-		timestamp: ev.EventTime.Time,
+		timestamp: *tmstmp,
 	}
 }
 
 func ClusterOperatorEventToInput(ev corev1.Event) *Input {
-	if ev.EventTime.Time.IsZero() {
+	tmstmp := eventTimeStamp(ev)
+	if tmstmp == nil {
 		return nil
 	}
+
 	return &Input{
 		group:     ev.InvolvedObject.Namespace,
 		label:     ev.InvolvedObject.Name,
 		value:     ev.Reason,
-		timestamp: ev.EventTime.Time,
+		timestamp: *tmstmp,
 	}
 }
