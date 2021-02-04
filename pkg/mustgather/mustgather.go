@@ -161,11 +161,13 @@ func (s *parser) OperatorEvents(ns string) *[]event.Input {
 		if ev.Reason != "OperatorStatusChanged" {
 			continue
 		}
-		newInput := event.ClusterOperatorEventToInput(ev)
-		if newInput == nil {
+		inputs := event.ClusterOperatorEventToInput(ev)
+		if inputs == nil {
 			continue
 		}
-		result = append(result, *newInput)
+		for _, input := range *inputs {
+			result = append(result, input)
+		}
 	}
 	return &result
 }

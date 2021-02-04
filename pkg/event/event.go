@@ -3,6 +3,7 @@ package event
 import (
 	"encoding/json"
 	"net/http"
+	"regexp"
 	"sync"
 	"time"
 
@@ -121,16 +122,43 @@ func PodEventToInput(ev corev1.Event) *Input {
 	}
 }
 
-func ClusterOperatorEventToInput(ev corev1.Event) *Input {
+const (
+	regexpPrefix     = "Status for clusteroperator\\/(.+) changed: "
+	regexpRepeatable = "(\\w+) set to (\\w+).*"
+	regexpRepeats    = 10
+	regexpSeparator  = ","
+)
+
+func ClusterOperatorEventToInput(ev corev1.Event) *[]Input {
+	// Single operator event may emit multiple input changes
+
+	result := []Input{}
+
 	tmstmp := eventTimeStamp(ev)
 	if tmstmp == nil {
 		return nil
 	}
 
-	return &Input{
-		group:     ev.InvolvedObject.Namespace,
-		label:     ev.InvolvedObject.Name,
-		value:     ev.Reason,
-		timestamp: *tmstmp,
+	// Assemble a regexp by concating prefix and repeatable part
+	labelIndexShift := 0
+	regexpStr := regexpPrefix + regexpRepeatable
+	for i := 1; i < regexpRepeats; i++ {
+		regexp := regexp.MustCompile(regexpStr)
+		match := regexp.FindAllStringSubmatch(ev.Message, -1)
+		if match != nil && len(match) > 0 {
+			input := Input{
+				group:     match[0][1],
+				label:     match[0][2+labelIndexShift],
+				value:     match[0][3+labelIndexShift],
+				timestamp: *tmstmp,
+			}
+			result = append(result, input)
+			regexpStr = regexpStr + regexpSeparator + regexpRepeatable
+			// huh, insted of appending to the end regexp keeps placing new item on #4?
+			labelIndexShift = 2
+		} else {
+			break
+		}
 	}
+	return &result
 }
